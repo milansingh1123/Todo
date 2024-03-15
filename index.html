@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TODO App</title>
+</head>
+<body>
+    <h1>TODO App</h1>
+    <input type="text" id="todoInput" placeholder="Enter Todo">
+    <button onclick="addTodo()">Add Todo</button>
+    <ul id="todoList"></ul>
+    <script>
+        function addTodo() {
+            const todoInput = document.getElementById('todoInput').value;
+            if (!todoInput) return;
+            fetch('/todos', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ todo: todoInput })
+            })
+            .then(response => {
+                if (response.ok) {
+                    loadTodos();
+                } else {
+                    throw new Error('Error adding todo');
+                }
+            })
+            .catch(error => {
+                alert(error.message);
+            });
+        }
+
+        function deleteTodo(id) {
+            fetch(`/todos/${id}`, {
+                method: 'DELETE'
+            })
+            .then(response => {
+                if (response.ok) {
+                    loadTodos();
+                } else {
+                    throw new Error('Error deleting todo');
+                }
+            })
+            .catch(error => {
+                alert(error.message);
+            });
+        }
+        function editTodo(id) {
+            const newTodo = prompt('Enter the new todo:');
+            if (!newTodo) return;
+
+            fetch(`/todos/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ todo: newTodo })
+            })
+            .then(response => {
+                if (response.ok) {
+                    loadTodos();
+                } else {
+                    throw new Error('Error editing todo');
+                }
+            })
+            .catch(error => {
+                alert(error.message);
+            });
+        }
+        function loadTodos() {
+            fetch('/todos')
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    throw new Error('Error fetching todos');
+                }
+            })
+            .then(todos => {
+                const todoList = document.getElementById('todoList');
+                todoList.innerHTML = '';
+                todos.forEach((todo, index) => {
+                    const li = document.createElement('li');
+                    li.textContent = todo;
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.textContent = 'Delete';
+                    deleteBtn.onclick = function () {
+                        deleteTodo(index);
+                    };
+                    const editBtn = document.createElement('button');
+                    editBtn.textContent = 'Edit';
+                    editBtn.onclick = function () {
+                        editTodo(index);
+                    };
+                    li.appendChild(deleteBtn);
+                    li.appendChild(editBtn);
+                    todoList.appendChild(li);
+                });
+            })
+            .catch(error => {
+                alert(error.message);
+            });
+        }
+        loadTodos();
+    </script>
+</body>
+</html>
